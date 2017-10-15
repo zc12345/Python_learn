@@ -1,0 +1,4 @@
+83.51
+72.67	record time:2017-07-11 23:44:24	details:{'getup': 0, 'sleep': 0, 'codes': 160, 'score': 72.67, 'supper': 1, 'steps': 2335, 'recite_words': 0, 'study_time': 460, 'run_miles': 0, 'breakfeast': 1, 'lunch': 1}
+77.45	record time:2017-07-13 00:38:09	details:{'run_miles': 0, 'lunch': 1, 'study_time': 600, 'codes': 0, 'supper': 1, 'steps': 4724, 'breakfeast': 1, 'score': 77.44800000000001, 'sleep': 1, 'recite_words': 0, 'getup': 0}
+40.72	record time:2017-07-14 01:01:53	details:{'breakfeast': 1, 'score': 40.718, 'sleep': 0, 'supper': 1, 'run_miles': 0, 'steps': 4359, 'getup': 1, 'study_time': 240, 'recite_words': 0, 'codes': 0, 'lunch': 1}
