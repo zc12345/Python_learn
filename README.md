@@ -16,3 +16,7 @@ numpy模块的demo和学习
 4. deeplearning-ai
 
 Andrew Ng 的deeplearning.ai课程习题
+
+5. notes
+
+一些学习笔记和总结（大部分是对于别人总结的链接）
