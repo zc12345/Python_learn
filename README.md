@@ -17,6 +17,10 @@ numpy模块的demo和学习
 
 Andrew Ng 的deeplearning.ai课程习题
 
-5. notes
+5. network-security
+
+计算机网络安全与管理课程的实验，包括RC4加密算法等的python实现
+
+6. notes
 
 一些学习笔记和总结（大部分是对于别人总结的链接）
