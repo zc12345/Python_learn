@@ -31,6 +31,6 @@ if __name__ == "__main__":
     key = "helloworld"
     text = "helloworld!\nstuID:1234567890 stuName:zc12345"
     ciphertext = rc4(text,key,'encode')
-    print ciphertext
+    print "==========ciphertext===========\n"+ciphertext
     plaintext = rc4(ciphertext,key,'decode')
-    print plaintext
+    print "==========plaintext============\n"+plaintext
