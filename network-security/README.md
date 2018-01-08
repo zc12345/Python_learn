@@ -39,6 +39,9 @@
 
 1. [Safe-Communication](https://github.com/spdv123/Safe-Communicate)
 2. [python加密算法](http://blog.hszofficial.site/TutorialForPython/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95.html)
+3. [廖雪峰 Python网络编程](https://www.liaoxuefeng.com/wiki/001374738125095c955c1e6d8bb493182103fac9270762a000/00138683226192949cd41410a6d4f1ebfa9ba40bbd1399d000)
+4. [菜鸟教程 Python网络编程](http://www.runoob.com/python/python-socket.html)
+5. [循序渐进学Python 网络编程](https://www.cnblogs.com/IPrograming/p/Python-socket.html)
 
 #### 6. debug history
 
@@ -74,3 +77,5 @@ fixed
 $ lsof -i TCP:23333 | grep LISTEN 
 $ kill -s 9 <PID>
 ```
+
+

@@ -17,7 +17,6 @@ def Sender(sender, receiver, host, port):
     signature = sec.sign(msg)
     text = ciphermsg + ":::" + cipherkey + ":::" + signature
     print "Connecting......"
-    print text
     try:
         s.connect((host, port))
         print "Success connected"
@@ -38,7 +37,7 @@ def test(host,port):
 if __name__ == "__main__":
     sender = 'A'
     receiver = 'B'
-    host = '120.78.148.77'
+    host = 'admin1'
     port = 23333
     Sender(sender, receiver, host, port)
     #test(host,port)
