@@ -3,6 +3,22 @@
 
 import socket, time, threading
 
+def udp_server(host,port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.bind((host,port))
+    print 'Bind UDP on %s:%s......'%(host, port)
+    buffer = []
+    while True:
+        data, addr = s.recvfrom(1024)
+        if data:
+            buffer.append(data)
+            print 'Received from %s :%s......' % addr
+            s.sendto('Hello,%s~'%data, addr)
+        else:
+            break
+    msg = ''.join(buffer)
+    print 'msg:',msg
+
 def tcp_server(host,port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((host, port))#绑定IP地址
@@ -30,4 +46,4 @@ if __name__ == "__main__":
     host = socket.gethostname()
     print host
     port = 9999
-    tcp_server(host,port)
+    udp_server(host,port)

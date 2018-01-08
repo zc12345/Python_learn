@@ -3,6 +3,15 @@
 
 import socket
 
+def udp_connect(host, port, msg):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    for data in msg:
+        s.sendto(data,(host,port))
+        print s.recv(1024)
+    s.close()
+    result = True
+    return result
+
 def tcp_connect(host, port, msg):
     s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)#创建socket
     #AF_INET指定使用IPv4协议，AF_INET6指定IPv6协议；SOCK_STREAM指定使用面向流的TCP协议
@@ -47,5 +56,5 @@ if __name__ == "__main__":
     port = 9999
     #msg = 'GET / HTTP/1.1\r\nHost: www.sina.com.cn\r\nConnection: close\r\n\r\n'
     msg = 'test'
-    result = tcp_connect(host,port,msg)
+    result = udp_connect(host,port,msg)
     print result
