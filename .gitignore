@@ -1,6 +1,7 @@
 #test input or output
 *.txt
 /deeplearning.ai #exercise
+.idea/
 .vscode/
 .ipynb_checkpoints/
 
