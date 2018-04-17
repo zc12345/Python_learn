@@ -1,0 +1,4 @@
+# train dataset && test dataset
+data/
+bayes/
+bayes.py
