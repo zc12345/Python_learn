@@ -13,17 +13,23 @@ import os.path as osp
 import json
 import numpy as np
 import logging
-import datetime
 import matplotlib.pyplot as plt
 from PIL import Image
 
-now = datetime.datetime.now().strftime('%Y-%m-%d-%H')
-
 logging.basicConfig(level=logging.DEBUG,
-                    filename='debug-{}.log'.format(now),
+                    filename='debug.log',
                     format='[%(asctime)s] %(levelname)s [%(funcName)s: %(filename)s, %(lineno)d] %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     filemode='a')
+
+def _load(json_path):
+    # load json file
+    data = json.load(open(json_path))
+    for shape in data['shapes']:
+        if shape['label'] == 'road':
+            return np.array(shape['points'])
+    logging.error('No road annotation.')
+    return None
 
 class normPointLabel:
     def __init__(self, left_top=np.array([0, 0]), right_bottom=np.array([1279, 1023]), delta=5, k=8):
@@ -31,15 +37,6 @@ class normPointLabel:
         self.coord2 = right_bottom # right bottom coordinate in image
         self.delta = delta # labels near image boundary (< delta pixel) are considered as boundary points
         self.k = k # point number for one side
-        
-    def _load(self, json_path):
-        # load json file
-        data = json.load(open(json_path))
-        for shape in data['shapes']:
-            if shape['label'] == 'road':
-                return np.array(shape['points'])
-        logging.error('No road annotation.')
-        return None
     
     def _refineLabel(self, pts):
         # refine annotation points close to corner
@@ -123,18 +120,25 @@ class normPointLabel:
             logging.error('bottom point index is abnormal.')
         # get top points
         top_index = pts[:,1].argmin()
+        tops_index = []
+        for i, pt in enumerate(pts):
+            if np.abs(pt[1] - pts[top_index][1]) < self.delta:
+                tops_index.append(i)
         if top_index > 1 and top_index < m-2:
-            candiate0 = pts[top_index]
-            candiate1 = pts[top_index - 1]
-            candiate2 = pts[top_index + 1]
-            dist1 = np.sum((candiate1 - candiate0)**2)
-            dist2 = np.sum((candiate2 - candiate0)**2)
-            if dist1 < dist2:
-                # left_top, right_top = candiate1, candiate0
-                left_top_index, right_top_index = top_index - 1, top_index
+            if len(tops_index) < 3:
+                candiate0 = pts[top_index]
+                candiate1 = pts[top_index - 1]
+                candiate2 = pts[top_index + 1]
+                dist1 = np.sum((candiate1 - candiate0)**2)
+                dist2 = np.sum((candiate2 - candiate0)**2)
+                if dist1 < dist2:
+                    # left_top, right_top = candiate1, candiate0
+                    left_top_index, right_top_index = top_index - 1, top_index
+                else:
+                    # left_top, right_top = candiate0, candiate2
+                    left_top_index, right_top_index = top_index, top_index + 1
             else:
-                # left_top, right_top = candiate0, candiate2
-                left_top_index, right_top_index = top_index, top_index + 1
+                left_top_index, right_top_index = min(tops_index), max(tops_index)
         else:
             logging.error("top point index is abnormal.")
         corner_pts_index = [left_bottom_index, left_mid_index, left_top_index, right_top_index, right_mid_index, right_bottom_index]
@@ -171,7 +175,7 @@ class normPointLabel:
         
     def normLabel(self, json_path):
         # from LabelMe road annotation to fixed number points annotation
-        pts = self._load(json_path)
+        pts = _load(json_path)
         pts = np.trunc(pts)
         assert pts is not None, 'No point label'
         pts = self._refineLabel(pts)
@@ -227,18 +231,20 @@ class normPointLabel:
                     logging.info('END save.')
 
 def main():
-    root_path = '../../data/imgs'
-    set_dir = 'sequence-3'
+    path = '../../data/imgs'
     npl = normPointLabel()
-    img_dir = osp.join(root_path, set_dir, 'img')
-    json_dir = osp.join(root_path, set_dir, 'label')
-    save_dir = osp.join(root_path, set_dir, 'keypoint_label')
-    save_fig_dir = osp.join(root_path, set_dir, 'keypoint_label_fig')
-    if not osp.exists(save_dir):
-        os.mkdir(save_dir)
-    if not osp.exists(save_fig_dir):
-        os.mkdir(save_fig_dir)
-    npl.batchNorm(json_dir, save_dir, save_fig_dir, img_dir)
+    for root_path, set_dirs, files in os.walk(path):
+        for set_dir in set_dirs:
+            img_dir = osp.join(root_path, set_dir, 'img')
+            json_dir = osp.join(root_path, set_dir, 'label')
+            save_dir = osp.join(root_path, set_dir, 'keypoint_label')
+            save_fig_dir = osp.join(root_path, set_dir, 'keypoint_label_fig')
+            assert osp.exists(img_dir) and osp.exists(json_dir), 'json or image dir does not exist.'
+            if not osp.exists(save_dir):
+                os.mkdir(save_dir)
+            if not osp.exists(save_fig_dir):
+                os.mkdir(save_fig_dir)
+            npl.batchNorm(json_dir, save_dir, save_fig_dir, img_dir)
 
 
 if __name__ == '__main__':
