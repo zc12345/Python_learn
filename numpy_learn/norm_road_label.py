@@ -40,14 +40,18 @@ class normPointLabel:
     
     def _refineLabel(self, pts):
         # refine annotation points close to corner
+        top_y = np.min(pts[:,1])
         for i, pt in enumerate(pts):
             res1 = np.abs(pt - self.coord1)
             res2 = np.abs(pt - self.coord2)
+            res3 = np.abs(pt[1] - top_y)
             for j, p in enumerate(pt):
                 if res1[j] < self.delta:
                     pts[i, j] = self.coord1[j]
                 elif res2[j] < self.delta:
                     pts[i, j] = self.coord2[j]
+            if res3 < self.delta:
+                pts[i, 1] = top_y
         return pts
     
     def _isClockwise(self, pts):
@@ -70,15 +74,20 @@ class normPointLabel:
     
     def _resortPts(self, pts):
         # resort point order from left bottom
-        start = 0
-        left_min = self.coord2[0]
+        m, n = pts.shape
+        start, end = 0, m-1
+        left_min, right_max = np.min(pts[:, 0]), np.max(pts[:, 0])
         for index, point in enumerate(pts):
-            if point[1] == self.coord2[1] and point[0] < left_min:
-                left_min = point[0]
+            if point[1] == self.coord2[1] and point[0] == left_min:
                 start = index
         sorted_pts = np.zeros(pts.shape)
         sorted_pts[:pts.shape[0]-start] = pts[start:]
         sorted_pts[pts.shape[0]-start:] = pts[:start]
+        for index, point in enumerate(sorted_pts):
+            if point[1] == self.coord2[1] and point[0] == right_max:
+                end = index
+        if not end == m-1:
+            sorted_pts = sorted_pts[:end + 1]
         return sorted_pts
     
     def _getCorner(self, pts):
@@ -90,11 +99,11 @@ class normPointLabel:
         '''
         left_bottom_index = left_mid_index = left_top_index = right_top_index = right_mid_index = right_bottom_index = None
         m, n = pts.shape
-        left_bottom_index, right_bottom_index = 0, -1
+        left_bottom_index, right_bottom_index = 0, m-1
         # get bottom points and mid points
         if (not pts[0, 0] == self.coord1[0]) and (not pts[-1, 0] == self.coord2[0]):
             logging.info('Mid points are None.')
-            left_mid_index, right_mid_index = 0, -1
+            left_mid_index, right_mid_index = 0, m-1
         elif (not pts[0, 0] == self.coord1[0]) and pts[-1, 0] == self.coord2[0]:
             rights = np.ones(pts.shape) * max(self.coord2) # init with inf_max number
             for i, pt in enumerate(pts):
@@ -106,7 +115,7 @@ class normPointLabel:
             for i, pt in enumerate(pts):
                 if pt[0] == self.coord1[0]:
                     lefts[i] = pt
-            left_mid_index, right_mid_index = lefts[:, 1].argmin(), -1
+            left_mid_index, right_mid_index = lefts[:, 1].argmin(), m-1
         elif pts[0, 0] == self.coord1[0] and pts[-1, 0] == self.coord2[0]:
             lefts = np.ones(pts.shape) * max(self.coord2)
             rights = np.ones(pts.shape) * max(self.coord2) # init with inf_max number
@@ -125,12 +134,12 @@ class normPointLabel:
             if np.abs(pt[1] - pts[top_index][1]) < self.delta:
                 tops_index.append(i)
         if top_index > 1 and top_index < m-2:
-            if len(tops_index) < 3:
+            if len(tops_index) < 2:
                 candiate0 = pts[top_index]
                 candiate1 = pts[top_index - 1]
                 candiate2 = pts[top_index + 1]
-                dist1 = np.sum((candiate1 - candiate0)**2)
-                dist2 = np.sum((candiate2 - candiate0)**2)
+                dist1 = np.abs(candiate1[1] - candiate0[1])
+                dist2 = np.abs(candiate2[1] - candiate0[1])
                 if dist1 < dist2:
                     # left_top, right_top = candiate1, candiate0
                     left_top_index, right_top_index = top_index - 1, top_index
@@ -177,12 +186,16 @@ class normPointLabel:
         # from LabelMe road annotation to fixed number points annotation
         pts = _load(json_path)
         pts = np.trunc(pts)
+#        plt.plot(pts[:,0], pts[:, 1], '-*', color='red')
         assert pts is not None, 'No point label'
         pts = self._refineLabel(pts)
+#        plt.plot(pts[:,0], pts[:, 1], '-*', color='yellow')
         flag = self._isClockwiseBottom(pts)
+#        plt.plot(pts[:,0], pts[:, 1], '-*', color='blue')
         if not flag:
             pts = np.flip(pts, axis=0)
         pts = self._resortPts(pts)
+#        plt.plot(pts[:,0], pts[:, 1], '-*', color='green')
         corner_pts_index = self._getCorner(pts)
         final_pts = self._interpDiv(pts, corner_pts_index)
         return pts, final_pts
@@ -211,7 +224,7 @@ class normPointLabel:
                              markersize=10, marker='o', color='red', markerfacecolor='blue',
                              linestyle='dashed', linewidth=3, markeredgecolor='m')
                     fig = plt.gcf()
-                    fig.set_size_inches(w / 100.0, h / 100.0)  # 输出width*height像素
+                    fig.set_size_inches(w / 100.0, h / 100.0)
                     plt.gca().xaxis.set_major_locator(plt.NullLocator())
                     plt.gca().yaxis.set_major_locator(plt.NullLocator())
                     plt.subplots_adjust(top=1, bottom=0, left=0, right=1, hspace=0, wspace=0)
@@ -231,21 +244,27 @@ class normPointLabel:
                     logging.info('END save.')
 
 def main():
-    path = '../../data/imgs'
+    root_path = '.'
+    set_dir = 'set-3'
     npl = normPointLabel()
-    for root_path, set_dirs, files in os.walk(path):
-        for set_dir in set_dirs:
-            img_dir = osp.join(root_path, set_dir, 'img')
-            json_dir = osp.join(root_path, set_dir, 'label')
-            save_dir = osp.join(root_path, set_dir, 'keypoint_label')
-            save_fig_dir = osp.join(root_path, set_dir, 'keypoint_label_fig')
-            assert osp.exists(img_dir) and osp.exists(json_dir), 'json or image dir does not exist.'
-            if not osp.exists(save_dir):
-                os.mkdir(save_dir)
-            if not osp.exists(save_fig_dir):
-                os.mkdir(save_fig_dir)
-            npl.batchNorm(json_dir, save_dir, save_fig_dir, img_dir)
+#    for root_path, set_dirs, files in os.walk(path):
+#        for set_dir in set_dirs:
+    for i in range(7,10):
+        set_dir = 'set-{}'.format(i)
+        img_dir = osp.join(root_path, set_dir, 'img')
+        json_dir = osp.join(root_path, set_dir, 'label')
+        save_dir = osp.join(root_path, set_dir, 'keypoint_label')
+        save_fig_dir = osp.join(root_path, set_dir, 'keypoint_label_fig')
+        assert osp.exists(img_dir) and osp.exists(json_dir), 'json or image dir does not exist.'
+        if not osp.exists(save_dir):
+            os.mkdir(save_dir)
+        if not osp.exists(save_fig_dir):
+            os.mkdir(save_fig_dir)
+        npl.batchNorm(json_dir, save_dir, save_fig_dir, img_dir)
 
 
 if __name__ == '__main__':
     main()
+#    npl = normPointLabel()
+#    npl.normLabel('set-7/label/Section49CameraC_00703c.json')
+    
