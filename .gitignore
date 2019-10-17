@@ -1,5 +1,9 @@
 #test input or output
 *.txt
+*.png
+*.mkv
+*.mp4
+*.tif
 /deeplearning.ai #exercise
 .idea/
 .vscode/
